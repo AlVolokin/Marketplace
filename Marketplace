@@ -130,7 +130,7 @@ contract Marketplace is Ownable, ReentrancyGuard{
     
     function buy(bytes32 ID, uint _quantity) public nonReentrant payable {
         require(products[ID].quantity >= _quantity);
-        require(products[ID].price.mul(products[ID].quantity) <= msg.value);
+        require(products[ID].price.mul(_quantity) <= msg.value);
         
         products[ID].quantity = products[ID].quantity.sub(msg.value.div(products[ID].price));
         
