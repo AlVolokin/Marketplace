@@ -122,6 +122,7 @@ contract Marketplace is Ownable, ReentrancyGuard{
     struct Product {
         string name;
         uint price;
+        uint initialPrice;//Needed for the Dynamic pricing functionality
         uint quantity;
     }
     
@@ -133,6 +134,7 @@ contract Marketplace is Ownable, ReentrancyGuard{
         require(products[ID].price.mul(_quantity) <= msg.value);
         
         products[ID].quantity = products[ID].quantity.sub(msg.value.div(products[ID].price));
+        _updatePrice(ID);
         
         emit Purchase(ID, _quantity, msg.value);
     }
@@ -146,7 +148,7 @@ contract Marketplace is Ownable, ReentrancyGuard{
     //creates a new product and returns its ID
     function newProduct(string _name, uint _price, uint _quantity) public onlyOwner returns(bytes32) {
         bytes32 ID = keccak256(_name, now);
-        products[ID] = Product({name: _name, price: _price, quantity: _quantity});
+        products[ID] = Product({name: _name, price: _price, initialPrice: _price, quantity: _quantity});
         productIDs.push(ID);
         
         return ID;
@@ -168,6 +170,18 @@ contract Marketplace is Ownable, ReentrancyGuard{
     
     function withdraw() public onlyOwner {
         msg.sender.transfer(this.balance);
+    }
+    //Dynamic pricing functionality 
+    function _updatePrice(bytes32 ID) internal returns (uint) {
+        if(products[ID].quantity <= 7 &&  products[ID].quantity >= 4){
+            products[ID].price = products[ID].price.mul(2);
+        } else if(products[ID].quantity < 4){
+            products[ID].price = products[ID].price.mul(3);
+        } else{
+            products[ID].price = products[ID].initialPrice;
+        }
+        
+        return products[ID].price;
     }
 
 }
