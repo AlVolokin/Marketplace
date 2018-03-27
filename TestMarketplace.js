@@ -40,5 +40,18 @@ contract('Marketplace test', async (accounts) => {
 		await assert(product[2] == 15, "Product quantitty is not updated");
 	})
 	
+	it("should buy product", async () => {
+		let ins = await marketplace.deployed();
+  
+    var acc = accounts[0];
+    var buyer = accounts[1];
+    
+		let ProductOneId = await ins.newProduct(ProductOne.name, ProductOne.price, ProductOne.quantity, {from: acc});
+		let buyTx= await ins.buy(productOneId, 3, {value : Products.ProductOne.price * 3}, {from: buyer});
+		
+		let product = await ins.getProduct.call(productOneId);
+		assert(product[2] == 7, "The quantitie is not updated after the purchase");
+  })
+	
 	
 })
