@@ -19,7 +19,7 @@ contract('Marketplace test', async (accounts) => {
   
     var acc = accounts[0];
     
-		let ProductOneId = await ins.createProduct(ProductOne.name, ProductOne.price, ProductOne.quantity, {from: acc});
+		let ProductOneId = await ins.newProduct(ProductOne.name, ProductOne.price, ProductOne.quantity, {from: acc});
 		let createdProduct = await ins.getProduct.call(basicProductId);
 		
 		await assert(ProductOne.name == createdProduct[0], "names should correspond");
@@ -32,7 +32,7 @@ contract('Marketplace test', async (accounts) => {
   
     var acc = accounts[0];
     
-		let ProductOneId = await ins.createProduct(ProductOne.name, ProductOne.price, ProductOne.quantity, {from: acc});
+		let ProductOneId = await ins.newProduct(ProductOne.name, ProductOne.price, ProductOne.quantity, {from: acc});
 		
 		await ins.update(ProductOneId, 15, {from: acc});
 		
