@@ -1,57 +1,75 @@
-const marketplace = artifacts.require("Marketplace");
+const Marketplace = artifacts.require("Marketplace");
 
-const TestProducts = {
-	ProductOne : {
-		name: "jacket",
-		price : 15000000,
-		quantity: 10
-	},
-	ProductTwo : {
-		name: "gloves",
+const Products = {
+	productOne : {
+		name: "productOne",
 		price : 100000,
-		quantity: 0
+		quantity: 12
 	},
+	productTwo : {
+		name: "productTwo",
+		price : 10,
+		quantity: 10
+	}
 };
 
-contract('Marketplace test', async (accounts) => {
+contract("Marketplace", async (accounts) => {
+	let marketplace;
+	
+	beforeEach(async () => {
+		marketplace = await Marketplace.new(accounts[0]);
+	})
+
+	it("Check owner after deploy", async () => {
+		let owner = await marketplace.owner.call();
+		assert(owner == accounts[0]);
+	})
+	
   it("should create product", async () => {
-    let ins = await marketplace.deployed();
+		let newProductId = await marketplace.newProduct(Products.productOne.name, Products.productOne.price, Products.productOne.quantity, {from : accounts[0]});
+		let createdProduct = await marketplace.getProduct.call(newProductId);
+		await assert(Products.productOne.name == createdProduct[0], "both names should be equal");
+	  await assert(Products.productOne.price == createdProduct[1], "both prices should be equal");
+	  await assert(Products.productOne.quantity == createdProduct[2], "both quantities should be equal");
+	})
   
-    var acc = accounts[0];
-    
-		let ProductOneId = await ins.newProduct(ProductOne.name, ProductOne.price, ProductOne.quantity, {from: acc});
-		let createdProduct = await ins.getProduct.call(basicProductId);
+  it("should return all product IDs", async () => {
+		let newProductOne = await marketplace.newProduct(Products.productOne.name, Products.productOne.price, Products.productOne.quantity, {from : accounts[0]});
+		let newProductTwo = await marketplace.newProduct(Products.productTwo.name, Products.productTwo.price, Products.productTwo.quantity, {from : accounts[0]});
 		
-		await assert(ProductOne.name == createdProduct[0], "names should correspond");
-	  await assert(ProductOne.price == createdProduct[1], "prices should correspond");
-	  await assert(ProductOne.quantity == createdProduct[2], "quantities should correspond");
+		let ids = await marketplace.getProducts.call();
+		assert(ids.length == 2, "All ids should be two");
+		assert(ids[0] == newProductOne, "Product Ids should correspond");
+		assert(ids[1] == newProductTwo, "Product Ids should correspond");
 	})
 	
-	it("should update product", async () => {
-    let ins = await marketplace.deployed();
-  
-    var acc = accounts[0];
-    
-		let ProductOneId = await ins.newProduct(ProductOne.name, ProductOne.price, ProductOne.quantity, {from: acc});
+	it("should update the quantity of the product", async () => {
+	  let newProductId = await marketplace.newProduct(Products.productOne.name, Products.productOne.price, Products.productOne.quantity, {from : accounts[0]});
+		await marketplace.update(newProductId, 5, {from : accounts[0]});
 		
-		await ins.update(ProductOneId, 15, {from: acc});
-		
-		let product = await ins.getProduct.call(ProductOneId);
-		await assert(product[2] == 15, "Product quantitty is not updated");
+		assert(marketplace.products[newProductId].quantity == 5, "The new quantity should be 5");
 	})
 	
-	it("should buy product", async () => {
-		let ins = await marketplace.deployed();
+	it("should buy a product", async () => {
+		let newProductId = await marketplace.newProduct(Products.productOne.name, Products.productOne.price, Products.productOne.quantity, {from : accounts[0]});
+		let buyTx= await marketplace.buy(newproductId, 5, {value : Products.productOne.price * 5});
+
+		let product = await marketplace.getProduct.call(newProductId);
+		assert(product[2] == 5, "The quantitie should be 5 after the purchase");
+	})
   
-    var acc = accounts[0];
-    var buyer = accounts[1];
-    
-		let ProductOneId = await ins.newProduct(ProductOne.name, ProductOne.price, ProductOne.quantity, {from: acc});
-		let buyTx= await ins.buy(productOneId, 3, {value : Products.ProductOne.price * 3}, {from: buyer});
-		
-		let product = await ins.getProduct.call(productOneId);
-		assert(product[2] == 7, "The quantitie is not updated after the purchase");
-  })
-	
-	
+  it("should buy a product and update its price", async () => {
+		let newProductId = await marketplace.newProduct(Products.productOne.name, Products.productOne.price, Products.productOne.quantity, {from : accounts[0]});
+		let buyTx= await marketplace.buy(newproductId, 5, {value : Products.productOne.price * 5});
+
+		let product = await marketplace.getProduct.call(newProductId);
+		assert(product[1] == 200000, "The new price should be 200000, doubled from the default one");
+	})
+  
+  it("should calculate the price of a certain product", async () => {
+		let newProductId = await marketplace.newProduct(Products.productOne.name, Products.productOne.price, Products.productOne.quantity, {from : accounts[0]});
+		let price = await marketplace.getPrice.call(newProductId, 40);
+		assert(price == Products.productOne.price * 40, "The calculated price was not correct");
+	})
+  
 })
