@@ -38,7 +38,7 @@ contract("Marketplace", async (accounts) => {
 		let newProductTwo = await marketplace.newProduct(Products.productTwo.name, Products.productTwo.price, Products.productTwo.quantity, {from : accounts[0]});
 		
 		let ids = await marketplace.getProducts.call();
-		assert(ids.length == 2, "All ids should be two");
+		assert(ids.length == 2, "Total number of ids should be two");
 		assert(ids[0] == newProductOne, "Product Ids should correspond");
 		assert(ids[1] == newProductTwo, "Product Ids should correspond");
 	})
