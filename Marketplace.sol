@@ -1,4 +1,4 @@
-pragma solidity 0.4.21;
+pragma solidity 0.4.19;
 
 /**
  * @title SafeMath
@@ -106,7 +106,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -136,13 +136,13 @@ contract Marketplace is Ownable, ReentrancyGuard{
         products[ID].quantity = products[ID].quantity.sub(msg.value.div(products[ID].price));
         _updatePrice(ID);
         
-        emit Purchase(ID, _quantity, msg.value);
+        Purchase(ID, _quantity, msg.value);
     }
     
     function update(bytes32 ID, uint _newQuantity) public onlyOwner {
         products[ID].quantity = _newQuantity;
         
-        emit ProductUpdate(ID, _newQuantity);
+        ProductUpdate(ID, _newQuantity);
     }
     
     //creates a new product and returns its ID
@@ -154,7 +154,7 @@ contract Marketplace is Ownable, ReentrancyGuard{
         
         return ID;
         
-        emit NewProductAdded(ID, _name, _price, _quantity);
+        NewProductAdded(ID, _name, _price, _quantity);
     }
     
     function getProduct(bytes32 ID) public view returns(string name, uint price, uint quantity) {
