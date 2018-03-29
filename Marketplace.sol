@@ -141,13 +141,13 @@ contract Marketplace is Ownable, ReentrancyGuard{
     
     function update(bytes32 ID, uint _newQuantity) public onlyOwner {
         products[ID].quantity = _newQuantity;
+        _updatePrice(ID);
         
         ProductUpdate(ID, _newQuantity);
     }
     
     //creates a new product and returns its ID
     function newProduct(string _name, uint _price, uint _quantity) public onlyOwner returns(bytes32) {
-        require(_price > 0);
         bytes32 ID = keccak256(_name, now);
         products[ID] = Product({name: _name, price: _price, initialPrice: _price, quantity: _quantity});
         productIDs.push(ID);
@@ -186,3 +186,4 @@ contract Marketplace is Ownable, ReentrancyGuard{
     }
 
 }
+
