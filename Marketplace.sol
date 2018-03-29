@@ -151,7 +151,7 @@ contract Marketplace is Ownable, ReentrancyGuard{
         bytes32 ID = keccak256(_name, now);
         products[ID] = Product({name: _name, price: _price, initialPrice: _price, quantity: _quantity});
         productIDs.push(ID);
-        
+        _updatePrice(ID);
         return ID;
         
         NewProductAdded(ID, _name, _price, _quantity);
