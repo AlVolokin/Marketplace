@@ -1,4 +1,4 @@
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 
 /**
  * @title SafeMath
@@ -51,29 +51,7 @@ library SafeMath {
  * @notice If you mark a function `nonReentrant`, you should also
  * mark it `external`.
  */
-contract ReentrancyGuard {
 
-  /**
-   * @dev We use a single lock for the whole contract.
-   */
-  bool private reentrancy_lock = false;
-
-  /**
-   * @dev Prevents a contract from calling itself, directly or indirectly.
-   * @notice If you mark a function `nonReentrant`, you should also
-   * mark it `external`. Calling one nonReentrant function from
-   * another is not supported. Instead, you can implement a
-   * `private` function doing the actual work, and a `external`
-   * wrapper marked as `nonReentrant`.
-   */
-  modifier nonReentrant() {
-    require(!reentrancy_lock);
-    reentrancy_lock = true;
-    _;
-    reentrancy_lock = false;
-  }
-
-}
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -106,13 +84,13 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
 }
 
-contract Marketplace is Ownable, ReentrancyGuard{
+contract Marketplace is Ownable{
     using SafeMath for uint;
     
     event NewProductAdded(bytes32 ID, string name, uint price, uint quantity);
@@ -129,35 +107,39 @@ contract Marketplace is Ownable, ReentrancyGuard{
     bytes32[] productIDs;
     mapping(bytes32 => Product) products;
     
-    function buy(bytes32 ID, uint _quantity) public nonReentrant payable {
+    function buy(bytes32 ID, uint _quantity) public payable {
         require(products[ID].quantity >= _quantity);
         require(products[ID].price.mul(_quantity) <= msg.value);
         
         products[ID].quantity = products[ID].quantity.sub(msg.value.div(products[ID].price));
         _updatePrice(ID);
         
-        Purchase(ID, _quantity, msg.value);
+        emit Purchase(ID, _quantity, msg.value);
     }
     
     function update(bytes32 ID, uint _newQuantity) public onlyOwner {
+        require(ID != 0);
         products[ID].quantity = _newQuantity;
         _updatePrice(ID);
         
-        ProductUpdate(ID, _newQuantity);
+        emit ProductUpdate(ID, _newQuantity);
     }
     
     //creates a new product and returns its ID
     function newProduct(string _name, uint _price, uint _quantity) public onlyOwner returns(bytes32) {
+        bytes memory tempEmptyStringTest = bytes(_name);
+        require(tempEmptyStringTest.length != 0);
         bytes32 ID = keccak256(_name, now);
         products[ID] = Product({name: _name, price: _price, initialPrice: _price, quantity: _quantity});
         productIDs.push(ID);
         _updatePrice(ID);//The price, set by the owner upon creation, is the initial (base) one; depending on the given quantity the current price is calculated
         return ID;
         
-        NewProductAdded(ID, _name, _price, _quantity);
+        emit NewProductAdded(ID, _name, _price, _quantity);
     }
     
     function getProduct(bytes32 ID) public view returns(string name, uint price, uint quantity) {
+        require(ID != 0);
         return(products[ID].name, products[ID].price, products[ID].quantity);
     }
     
@@ -166,14 +148,16 @@ contract Marketplace is Ownable, ReentrancyGuard{
     }
     
     function getPrice(bytes32 ID, uint _quantity) public view returns (uint) {
+        require(ID != 0);
         return products[ID].price.mul(_quantity);
     }
     
     function withdraw() public onlyOwner {
-        msg.sender.transfer(this.balance);
+        owner.transfer(this.balance);
     }
     //Dynamic pricing functionality 
     function _updatePrice(bytes32 ID) internal returns (uint) {
+        require(ID != 0);
         if(products[ID].quantity <= 7 &&  products[ID].quantity >= 4){
             products[ID].price = products[ID].price.mul(2);
         } else if(products[ID].quantity < 4){
